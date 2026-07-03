@@ -1,0 +1,25 @@
+{
+  "name": "@cyclefier/api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Cyclefier Fastify backend",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@fastify/rate-limit": "^10.0.0",
+    "@supabase/supabase-js": "^2.110.0",
+    "fastify": "^5.0.0",
+    "openai": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}

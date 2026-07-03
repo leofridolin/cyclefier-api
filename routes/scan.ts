@@ -193,7 +193,7 @@ export const scanRoutes = async (fastify: FastifyInstance): Promise<void> => {
           required: ['imageBase64', 'userId'],
           properties: {
             imageBase64: { type: 'string', minLength: 1 },
-            userId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string', minLength: 1 },
           },
         },
         response: {

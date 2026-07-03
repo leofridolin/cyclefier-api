@@ -41,18 +41,35 @@ const RATE_LIMIT_MAX_SCANS = 10;
 const MIN_CONFIDENCE = 0.4;
 const MODEL = 'gpt-4o' as const;
 
-const SYSTEM_PROMPT = `Analysiere dieses Bild. Erkennst du ein Fahrrad?
-Antworte AUSSCHLIESSLICH mit einem JSON-Objekt (kein Markdown, kein Text davor oder danach):
+const SYSTEM_PROMPT = `Du bist ein Fahrrad-Experte mit tiefem Wissen über Fahrradmarken, Modelle, Komponenten und Schweizer Marktpreise. Analysiere das Bild präzise.
+
+Vorgehensweise:
+1. Erkenne Markenlogos, Aufkleber, Rahmenform und Farbgebung
+2. Identifiziere Komponenten anhand sichtbarer Markierungen und Form
+3. Schätze Baujahr aus Komponentengeneration und Design
+4. Berechne realistischen Wiederverkaufswert in CHF (nicht UVP/Neupreis)
+
+Antworte NUR mit einem JSON-Objekt ohne Markdown oder erklärender Text. Verwende konkrete Werte – niemals leere Strings oder 0 als Platzhalter:
 {
-  "brand": "Markenname oder 'Unbekannt'",
-  "model": "Modellname oder 'Unbekannt'",
-  "model_year": null,
-  "specs": { "frame": "", "fork": "", "weight_kg": null },
-  "components": { "drivetrain": "", "brakes": "", "wheels": "", "saddle": "", "handlebar": "" },
-  "market_value_chf": 0,
-  "confidence": 0.0
+  "brand": "z.B. Trek, Specialized, Canyon, Rose, Scott, Giant, Cannondale, BMC, Cervelo, Pinarello",
+  "model": "z.B. Emonda SL6, Tarmac SL7, Ultimate CF SL, Reacto, Addict RC",
+  "model_year": 2021,
+  "specs": {
+    "frame": "z.B. Carbon Rennrad, Aluminium Hardtail, Carbon Enduro",
+    "fork": "z.B. Carbon Starrgabel, Fox 34 Float 140mm, RockShox SID",
+    "weight_kg": 8.2
+  },
+  "components": {
+    "drivetrain": "z.B. Shimano Ultegra R8000 2x11, SRAM Force AXS 2x12, Shimano XT M8100 1x12",
+    "brakes": "z.B. Shimano Ultegra Hydraulic Disc, SRAM Force Hydraulic, Felgenbremsen Dura-Ace",
+    "wheels": "z.B. DT Swiss R470 700c, Shimano RS500, Bontrager Paradigm 29 Zoll",
+    "saddle": "z.B. Fizik Antares R3, Selle Italia SLR, Bontrager Montrose",
+    "handlebar": "z.B. FSA Compact Rennlenker 42cm, Ritchey WCS Flat Bar, Canyon CP10"
+  },
+  "market_value_chf": 3200,
+  "confidence": 0.85
 }
-Falls kein Fahrrad sichtbar: { "error": "no_bike_detected", "confidence": 0 }`;
+Falls kein Fahrrad erkennbar: { "error": "no_bike_detected", "confidence": 0 }`;
 
 // ── Rate-limit helper ─────────────────────────────────────────────────────────
 
@@ -83,12 +100,19 @@ const analyseImage = async (imageBase64: string): Promise<GPTBikeResult> => {
 
   const response = await openai.chat.completions.create({
     model: MODEL,
-    max_tokens: 600,
+    max_tokens: 1000,
     messages: [
+      {
+        role: 'system',
+        content: SYSTEM_PROMPT,
+      },
       {
         role: 'user',
         content: [
-          { type: 'text', text: SYSTEM_PROMPT },
+          {
+            type: 'text',
+            text: 'Analysiere dieses Fahrrad-Bild genau und gib das JSON zurück.',
+          },
           { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
         ],
       },
